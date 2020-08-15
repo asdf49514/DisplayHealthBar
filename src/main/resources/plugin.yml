@@ -1,0 +1,4 @@
+name: DisplayHealthBar
+version: ${project.version}
+main: DisplayHealthBar.Main
+api-version: 1.13

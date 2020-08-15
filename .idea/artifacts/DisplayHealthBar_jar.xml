@@ -1,0 +1,10 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="DisplayHealthBar:jar">
+    <output-path>$PROJECT_DIR$/../../PCJE1152SPIGOT/plugins</output-path>
+    <root id="archive" name="DisplayHealthBar.jar">
+      <element id="module-output" name="DisplayHealthBar" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/annotations/13.0/annotations-13.0.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/1.1.3-2/kotlin-stdlib-1.1.3-2.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>

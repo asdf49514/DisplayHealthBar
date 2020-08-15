@@ -1,0 +1,4 @@
+name: DisplayHealthBar
+version: 1.0-SNAPSHOT
+main: DisplayHealthBar.Main
+api-version: 1.13
