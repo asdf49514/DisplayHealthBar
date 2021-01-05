@@ -22,15 +22,12 @@ import org.bukkit.plugin.java.JavaPlugin.getPlugin
 import org.bukkit.scheduler.BukkitRunnable
 import java.lang.ClassCastException
 import java.lang.Exception
-import java.util.ArrayList
-import java.util.HashMap
+import DisplayHealthBar.BossbarList
+import DisplayHealthBar.BossbarList.playerList
+import DisplayHealthBar.BossbarList.bossBarList
+import DisplayHealthBar.BossbarList.taskID
 
 class EntityBossBarHealthEvents : Listener {
-	var playerList = HashMap<String, Player>()
-	var bossBarList = HashMap<String, BossBar>()
-	private var taskID = HashMap<String, Int>()
-	//lateinit var damager: Player
-	
 	@EventHandler
 	fun onPlayerJoin(event: PlayerJoinEvent) {
 		val player = event.player
@@ -50,7 +47,7 @@ class EntityBossBarHealthEvents : Listener {
 			taskID.remove(player.name)
 		}
 		catch(exception: Exception) {
-			println("bossBar를 찾을 수 없습니다.")
+			println("${player.name}의 bossBar를 찾을 수 없습니다.")
 		}
 	}
 	
