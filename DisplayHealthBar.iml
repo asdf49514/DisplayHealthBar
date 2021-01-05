@@ -3,8 +3,8 @@
   <component name="AutoImportedSourceRoots">
     <option name="directories">
       <list>
-        <option value="C:\Users\Administrator\Desktop\04.5 Kotlin\DisplayHealthBar/src/main/kotlin" />
-        <option value="C:\Users\Administrator\Desktop\04.5 Kotlin\DisplayHealthBar/src/test/kotlin" />
+        <option value="C:\Users\USER\Desktop\Programs\DisplayHealthBar/src/main/kotlin" />
+        <option value="C:\Users\USER\Desktop\Programs\DisplayHealthBar/src/test/kotlin" />
       </list>
     </option>
   </component>
@@ -45,7 +45,7 @@
       <sourceFolder url="file://$MODULE_DIR$/src/test/resources" type="java-test-resource" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
-    <orderEntry type="inheritedJdk" />
+    <orderEntry type="jdk" jdkName="openjdk-15" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: org.spigotmc:spigot-api:1.15.2-R0.1-SNAPSHOT" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: commons-lang:commons-lang:2.6" level="project" />
