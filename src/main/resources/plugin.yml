@@ -2,3 +2,11 @@ name: DisplayHealthBar
 version: ${project.version}
 main: DisplayHealthBar.Main
 api-version: 1.13
+
+commands:
+  healthBar:
+    reloadAll:
+    deleteAll:
+    getOnlinePlayers:
+    setDeltaVelocity:
+      description: ""
