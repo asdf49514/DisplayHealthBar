@@ -26,6 +26,9 @@ import DisplayHealthBar.BossbarList
 import DisplayHealthBar.BossbarList.playerList
 import DisplayHealthBar.BossbarList.bossBarList
 import DisplayHealthBar.BossbarList.taskID
+import DisplayHealthBar.Settings.Settings
+import DisplayHealthBar.Util.roundFrom
+import java.lang.Math.abs
 
 class EntityBossBarHealthEvents : Listener {
 	@EventHandler
@@ -47,18 +50,11 @@ class EntityBossBarHealthEvents : Listener {
 			taskID.remove(player.name)
 		}
 		catch(exception: Exception) {
-			println("${player.name}의 bossBar를 찾을 수 없습니다.")
+			println("${player.name}의 bossBar를 찾을 수 없습니다. (onPlayerQuit)")
 		}
 	}
 	
-	/*
-	@EventHandler
-	fun getDamager(event: EntityDamageByEntityEvent) {
-		if(event.damager is Player) {
-			damager = event.damager as Player
-		}
-	}
-	*/
+	
 	private fun getNearbyEntitiesInRange(entityLocation: Location) = entityLocation.world!!.getNearbyEntities(entityLocation, 7.5, 7.5, 7.5) //주변의 엔티티들을 가져온다
 	@EventHandler
 	fun onEntityDamaged(event: EntityDamageEvent)  //todo 각주 넣기
@@ -87,24 +83,22 @@ class EntityBossBarHealthEvents : Listener {
 				}
 				
 				lateinit var vic: LivingEntity
-				try {
-					vic = event.entity as LivingEntity
-				}  //이벤트 관련 엔티티를 '살아있는 엔티티'로서 가져옴
-				catch(ignored: ClassCastException) {
-					return
-				}  //Casting이 안되는 엔티티를 가져오는 상황이기 때문에 아래의 코드가 작동하지 않게끔 바로 함수를 종료시킨다.
+				try { vic = event.entity as LivingEntity }  //이벤트 관련 엔티티를 '살아있는 엔티티'로서 가져옴
+				catch(ignored: ClassCastException) { return }  //Casting이 안되는 엔티티를 가져오는 상황
 				
-				val dmg = event.damage
-				var dmgDisplayed = -1
+				val dmg = (event.damage).roundFrom(2)
+				var dmgDisplayed = 0.0
 				val playerLocation = player.location
 				val nearbyEntities: MutableCollection<Entity> = playerLocation.world!!.getNearbyEntities(playerLocation, 7.5, 5.0, 7.5) //주변의 엔티티들을 가져온다
 				
 				if(event.cause != CRAMMING && event.cause != ENTITY_SWEEP_ATTACK && event.cause != SUICIDE) {  //해당 방식 이외의 방식으로 데미지를 입었을때
 					if(vic in nearbyEntities) {  //데미지를 입은게 nearbyEntities에 있다면
-						val hpReal = vic.health + 1 - dmg
-						var hpDisplayed = (vic.health + 1).toInt()
-						val hpPercentageReal: Double = (hpReal - 1) / vic.maxHealth
-						var hpPercentageDisplayed: Int /*= 0= ((hpDisplayed / vic.maxHealth)*100).toInt()*/
+						val hpReal = (vic.health - dmg).roundFrom(2)
+						var hpDisplayed = (vic.health).roundFrom(2)
+						val hpPercentageReal: Double = ((hpReal) / vic.maxHealth).roundFrom(2)
+						var hpPercentageDisplayed: Double /*= 0= ((hpDisplayed / vic.maxHealth)*100).toInt()*/
+						
+						//println("hpReal: ${hpReal}, dmg: ${dmg}, realhpReal: ${hpReal-dmg}") //디버깅 전용
 						
 						var bossBarTitle: String
 						val bossBarColor: BarColor
@@ -129,18 +123,21 @@ class EntityBossBarHealthEvents : Listener {
 						
 						object : BukkitRunnable() {
 							override fun run() {
-								if(hpDisplayed <= hpReal || hpDisplayed <= 1) this.cancel()
+								val delta = getAnimDelta(hpDisplayed, hpReal).roundFrom(2)
+								hpDisplayed = (hpDisplayed - delta).roundFrom(2)
+								dmgDisplayed = (dmgDisplayed + delta).roundFrom(2)
 								
-								hpDisplayed--
-								dmgDisplayed++
-								hpPercentageDisplayed = ((hpDisplayed / vic.maxHealth) * 100).toInt()
-								if(hpPercentageDisplayed.toDouble() / 100 < 0.0)
+								hpPercentageDisplayed = ((hpDisplayed / vic.maxHealth) * 100).roundFrom(2)
+								if(hpPercentageDisplayed / 100 < 0.0)
 									bossBar.progress = 0.0
 								else
-									bossBar.progress = hpPercentageDisplayed.toDouble() / 100
+									bossBar.progress = hpPercentageDisplayed / 100
 								
-								bossBarTitle = "${vic.name} $chatColor [HP : ${(hpDisplayed)} / ${(vic.maxHealth).toInt()} (${(hpPercentageDisplayed)}%)] §c [Damaged : ${dmgDisplayed}]"
+								bossBarTitle = "${vic.name} $chatColor [HP : ${hpDisplayed.roundFrom(2)} / ${(vic.maxHealth).roundFrom(2)} (${hpPercentageDisplayed.roundFrom(2)}%)] §c [Damaged : ${dmgDisplayed.roundFrom(2)}]"
 								bossBar.setTitle(bossBarTitle)
+								
+								if(hpDisplayed <= hpReal || hpDisplayed <= 0)
+									this.cancel()
 							}
 						}.runTaskTimer(getPlugin(Main::class.java), 1L, 1L)
 						
@@ -185,24 +182,22 @@ class EntityBossBarHealthEvents : Listener {
 				}
 				
 				lateinit var vic: LivingEntity
-				try {
-					vic = event.entity as LivingEntity
-				}  //이벤트 관련 엔티티를 '살아있는 엔티티'로서 가져옴
-				catch(ignored: ClassCastException) {
-					return
-				}  //Casting이 안되는 엔티티를 가져오는 상황이기 때문에 아래의 코드가 작동하지 않게끔 바로 함수를 종료시킨다.
+				try { vic = event.entity as LivingEntity }  //이벤트 관련 엔티티를 '살아있는 엔티티'로서 가져옴
+				catch(ignored: ClassCastException) { return }  //Casting이 안되는 엔티티를 가져오는 상황이기 때문에 아래의 코드가 작동하지 않게끔 바로 함수를 종료시킨다.
 				
 				val amount = event.amount
-				var amountDisplayed = -1
+				var amountDisplayed = 0.0
 				val playerLocation = player.location
 				val nearbyEntities: MutableCollection<Entity> = playerLocation.world!!.getNearbyEntities(playerLocation, 10.0, 5.0, 10.0) //주변의 엔티티들을 가져온다
 				
 				if(event.regainReason != WITHER_SPAWN && event.regainReason != EntityRegainHealthEvent.RegainReason.WITHER) {  //해당 방식이외의 방식으로 회복을 하였을때
 					if(vic in nearbyEntities) {  //회복을 한게 nearbyEntities에 있다면
-						val hpReal = vic.health - 1 + amount
-						var hpDisplayed = (vic.health - 1).toInt()  //어째선지 바로 이전 체력을 가져옴
-						val hpPercentageReal: Double = (hpReal + 1) / vic.maxHealth
-						var hpPercentageDisplayed: Int /*= 0= ((hpDisplayed / vic.maxHealth)*100).toInt()*/
+						val hpReal = (vic.health + amount).roundFrom(2)
+						var hpDisplayed = (vic.health).roundFrom(2)  //어째선지 바로 이전 체력을 가져옴
+						val hpPercentageReal: Double = ((hpReal) / vic.maxHealth).roundFrom(2)
+						var hpPercentageDisplayed: Double /*= 0= ((hpDisplayed / vic.maxHealth)*100).toInt()*/
+						
+						//println("hpReal: ${hpReal}, amount: ${amount}, realhpReal: ${hpReal+amount}") //디버깅 전용
 						
 						var bossBarTitle: String
 						val bossBarColor: BarColor
@@ -225,20 +220,23 @@ class EntityBossBarHealthEvents : Listener {
 						bossBar.color = bossBarColor
 						bossBar.isVisible = true
 						
-						
 						object : BukkitRunnable() {
 							override fun run() {
-								if(hpDisplayed >= hpReal || hpDisplayed >= vic.maxHealth - 1)  // HP : 21/20버그가 나타나지만 실제로 확인될 확률이 매우 희박하므로 수정은 딱히 안함
-									this.cancel()
+								val delta = getAnimDelta(hpDisplayed, hpReal).roundFrom(2)
+								hpDisplayed = (hpDisplayed + delta).roundFrom(2)
+								amountDisplayed = (amountDisplayed + delta).roundFrom(2)
 								
-								hpDisplayed++
-								amountDisplayed++
-								hpPercentageDisplayed = ((hpDisplayed / vic.maxHealth) * 100).toInt()
-								if(hpPercentageDisplayed.toDouble() / 100 > 1.0) bossBar.progress = 1.0
-								else bossBar.progress = hpPercentageDisplayed.toDouble() / 100
+								hpPercentageDisplayed = ((hpDisplayed / vic.maxHealth) * 100).roundFrom(2)
+								if(hpPercentageDisplayed / 100 > 1.0)
+									bossBar.progress = 1.0
+								else
+									bossBar.progress = hpPercentageDisplayed / 100
 								
-								bossBarTitle = "${vic.name} $chatColor [HP : ${(hpDisplayed)} / ${(vic.maxHealth).toInt()} (${(hpPercentageDisplayed)}%)] §a [Healed : ${amountDisplayed}]"
+								bossBarTitle = "${vic.name} $chatColor [HP : ${hpDisplayed.roundFrom(2)} / ${(vic.maxHealth).roundFrom(2)} (${hpPercentageDisplayed.roundFrom(2)}%)] §a [Healed : ${amountDisplayed.roundFrom(2)}]"
 								bossBar.setTitle(bossBarTitle)
+								
+								if(hpDisplayed >= hpReal || hpDisplayed >= vic.maxHealth)
+									this.cancel()
 							}
 						}.runTaskTimer(getPlugin(Main::class.java), 1L, 1L)
 						
@@ -254,4 +252,31 @@ class EntityBossBarHealthEvents : Listener {
 			}
 		}
 	}
+	
+	
+	fun getAnimDelta(v1: Double, v2: Double): Double
+	{
+		val valueDelta = abs(v1 - v2)
+		val velocity = Settings.deltaVelocity
+		
+		return when {
+			valueDelta*velocity < 0.1 -> 0.1
+			else                      -> valueDelta*velocity
+		}
+	}
+	
+	/*
+	fun getAnimDelta(v1: Double, v2: Double): Double
+	{
+		val valueDelta = abs(v1 - v2)
+		return when {
+			valueDelta <= 1.0 -> 0.1
+			valueDelta <= 5.0 -> 0.2
+			valueDelta <= 10.0 -> 0.3
+			valueDelta <= 20.0 -> 0.4
+			valueDelta <= 30.0 -> 0.6
+			valueDelta <= 40.0 -> 0.7
+			else              -> 0.8
+		}
+	}*/
 }
