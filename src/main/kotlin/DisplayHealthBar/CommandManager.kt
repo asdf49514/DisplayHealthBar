@@ -55,7 +55,7 @@ class CommandManager(private var plugin: Main) : CommandExecutor {  //todo 빌�
 					println("Player Count : $count")
 				}
 				args[0] == "setDeltaVelocity" -> {
-					val warning = "${ChatColor.RED}0.1 ~ 1.0 사이의 자연수를 입력해 주세요."
+					val warning = "${ChatColor.RED}0.1 ~ 1.0 사이의 실수를 입력해 주세요."
 					
 					val value: Double
 					try { value = args[2].toDouble() }
@@ -67,11 +67,27 @@ class CommandManager(private var plugin: Main) : CommandExecutor {  //todo 빌�
 						Settings.deltaVelocity = value
 						sender.sendMessage("${ChatColor.GREEN}설정되었습니다.")
 					}
-					else {
+					else
 						sender.sendMessage(warning)
-					}
 				}
-				
+				args[0] == "setRadius" -> {
+					val warning = "${ChatColor.RED}0 이상의 실수 두개를 입력해 주세요. (첫번째 가로범위, 두번째 세로범위) \n [예시: setRadius 7.5 5.0]"
+					
+					val horizontal: Double
+					val vertical: Double
+					try { horizontal = args[2].toDouble(); vertical = args[3].toDouble() }
+					catch(npException: NullPointerException) { sender.sendMessage(warning); return false }
+					catch(ioobException: IndexOutOfBoundsException) { sender.sendMessage(warning); return false }
+					catch(nfException: NumberFormatException) { sender.sendMessage(warning); return false }
+					
+					if(horizontal > 0 && vertical > 0) {
+						Settings.recogRangeHorizontal = horizontal
+						Settings.recogRangeVertical = vertical
+						sender.sendMessage("${ChatColor.GREEN}설정되었습니다. \n가로범위 : ${Settings.recogRangeHorizontal}, 세로범위 : ${Settings.recogRangeVertical}")
+					}
+					else
+						sender.sendMessage(warning)
+				}
 			}
 		}
 
