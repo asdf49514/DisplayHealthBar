@@ -1,7 +1,13 @@
 package DisplayHealthBar.Event
 
+import DisplayHealthBar.BossbarList.bossBarList
+import DisplayHealthBar.BossbarList.playerList
+import DisplayHealthBar.BossbarList.taskID
 import DisplayHealthBar.Main
+import DisplayHealthBar.Settings.Settings
+import DisplayHealthBar.Util.roundFrom
 import org.bukkit.Bukkit
+import org.bukkit.Location
 import org.bukkit.boss.BarColor
 import org.bukkit.boss.BarStyle
 import org.bukkit.boss.BossBar
@@ -13,21 +19,13 @@ import org.bukkit.event.Listener
 import org.bukkit.event.entity.EntityDamageByEntityEvent
 import org.bukkit.event.entity.EntityDamageEvent
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause.*
-import org.bukkit.event.entity.EntityRegainHealthEvent.RegainReason.*
 import org.bukkit.event.entity.EntityRegainHealthEvent
+import org.bukkit.event.entity.EntityRegainHealthEvent.RegainReason.*
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerQuitEvent
-import org.bukkit.Location
 import org.bukkit.plugin.java.JavaPlugin.getPlugin
 import org.bukkit.scheduler.BukkitRunnable
-import java.lang.ClassCastException
 import java.lang.Exception
-import DisplayHealthBar.BossbarList
-import DisplayHealthBar.BossbarList.playerList
-import DisplayHealthBar.BossbarList.bossBarList
-import DisplayHealthBar.BossbarList.taskID
-import DisplayHealthBar.Settings.Settings
-import DisplayHealthBar.Util.roundFrom
 import java.lang.Math.abs
 
 class EntityBossBarHealthEvents : Listener {
@@ -49,13 +47,47 @@ class EntityBossBarHealthEvents : Listener {
 			bossBarList.remove(player.name, bossBarList[player.name]!!)
 			taskID.remove(player.name)
 		}
-		catch(exception: Exception) {
+		catch (exception: Exception) {
 			println("${player.name}의 bossBar를 찾을 수 없습니다. (onPlayerQuit)")
 		}
 	}
 	
 	
-	private fun getNearbyEntitiesInRange(entityLocation: Location) = entityLocation.world!!.getNearbyEntities(entityLocation, 7.5, 7.5, 7.5) //주변의 엔티티들을 가져온다
+	private var blockedDamage = false
+	@EventHandler
+	fun entityRelativeDirction(dmgByEntEvent: EntityDamageByEntityEvent)
+	{
+		val damager = dmgByEntEvent.damager  //공격자
+		val victim = dmgByEntEvent.entity   //피격자
+		
+		val damagerToEntity = damager.location.clone().subtract(victim.location).toVector()
+		val victimLooking = victim.location.direction
+		val x1 = damagerToEntity.x
+		val z1 = damagerToEntity.z
+		val x2 = victimLooking.x
+		val z2 = victimLooking.z
+		val angle = Math.atan2(x1 * z2 - z1 * x2, x1 * x2 + z1 * z2) * 180 / Math.PI
+		
+		blockedDamage = angle in -90.0..90.0
+		
+		/*
+		if (angle >= -45 && angle < 45) {
+			// forward
+		}
+		else if (angle >= 45 && angle < 135) {
+			// Move left
+		}
+		else if (angle in 135.0..180.0 || angle >= -180 && angle < -135) {
+			// Move backward
+		}
+		else if (angle >= -135 && angle < -45) {
+			// Move right
+		}*/
+	}
+	
+	
+	private fun getNearbyEntitiesInRange(entityLocation: Location) = entityLocation.world!!.getNearbyEntities(entityLocation, Settings.recogRangeVertical, Settings.recogRangeHorizontal, Settings.recogRangeHorizontal) //주변의 엔티티들을 가져온다
+	
 	@EventHandler
 	fun onEntityDamaged(event: EntityDamageEvent)  //todo 각주 넣기
 	{
@@ -84,13 +116,14 @@ class EntityBossBarHealthEvents : Listener {
 				
 				lateinit var vic: LivingEntity
 				try { vic = event.entity as LivingEntity }  //이벤트 관련 엔티티를 '살아있는 엔티티'로서 가져옴
-				catch(ignored: ClassCastException) { return }  //Casting이 안되는 엔티티를 가져오는 상황
+				catch (ignored: ClassCastException) { return }  //Casting이 안되는 엔티티를 가져오는 상황
 				
-				val dmg = (event.damage).roundFrom(2)
+				val dmg = (event.finalDamage).roundFrom(2)
 				var dmgDisplayed = 0.0
 				val playerLocation = player.location
-				val nearbyEntities: MutableCollection<Entity> = playerLocation.world!!.getNearbyEntities(playerLocation, 7.5, 5.0, 7.5) //주변의 엔티티들을 가져온다
+				val nearbyEntities: MutableCollection<Entity> = getNearbyEntitiesInRange(playerLocation) //주변의 엔티티들을 가져온다
 				
+				if(vic is Player && vic.isBlocking && blockedDamage)  return  //대상이 뒤치기 당할때 안뜨는 문제가 생김  (막을때는 시선이 마주침 or 맞은 방향을 알아보는 것을 이용해보자.  https://www.spigotmc.org/threads/players-facing-direction-relative-to-the-entity.420843/, Attacks coming from within a 180° radius in front of a player will be negated,)
 				if(event.cause != CRAMMING && event.cause != ENTITY_SWEEP_ATTACK && event.cause != SUICIDE) {  //해당 방식 이외의 방식으로 데미지를 입었을때
 					if(vic in nearbyEntities) {  //데미지를 입은게 nearbyEntities에 있다면
 						val hpReal = (vic.health - dmg).roundFrom(2)
@@ -121,25 +154,41 @@ class EntityBossBarHealthEvents : Listener {
 						bossBar.color = bossBarColor
 						bossBar.isVisible = true
 						
-						object : BukkitRunnable() {
-							override fun run() {
-								val delta = getAnimDelta(hpDisplayed, hpReal).roundFrom(2)
-								hpDisplayed = (hpDisplayed - delta).roundFrom(2)
-								dmgDisplayed = (dmgDisplayed + delta).roundFrom(2)
-								
-								hpPercentageDisplayed = ((hpDisplayed / vic.maxHealth) * 100).roundFrom(2)
-								if(hpPercentageDisplayed / 100 < 0.0)
-									bossBar.progress = 0.0
-								else
-									bossBar.progress = hpPercentageDisplayed / 100
-								
-								bossBarTitle = "${vic.name} $chatColor [HP : ${hpDisplayed.roundFrom(2)} / ${(vic.maxHealth).roundFrom(2)} (${hpPercentageDisplayed.roundFrom(2)}%)] §c [Damaged : ${dmgDisplayed.roundFrom(2)}]"
-								bossBar.setTitle(bossBarTitle)
-								
-								if(hpDisplayed <= hpReal || hpDisplayed <= 0)
-									this.cancel()
-							}
-						}.runTaskTimer(getPlugin(Main::class.java), 1L, 1L)
+						if(dmg == 0.0 || hpDisplayed <= hpReal) {  //아무런 변화가 없을 때 //todo 체력 회복 이벤트에도 똑같이, (능력사용시 저항 5 -> 4or3으로 변경, 하고나서 이 각주 지우기)
+							hpPercentageDisplayed = ((hpDisplayed / vic.maxHealth) * 100).roundFrom(2)
+							if(hpPercentageDisplayed / 100 < 0.0)
+								bossBar.progress = 0.0
+							else
+								bossBar.progress = hpPercentageDisplayed / 100
+							
+							bossBarTitle = "${vic.name} $chatColor [HP : ${hpDisplayed.roundFrom(2)} / ${(vic.maxHealth).roundFrom(2)} (${hpPercentageDisplayed.roundFrom(2)}%)] §c [Damaged : ${dmgDisplayed.roundFrom(2)}]"
+							bossBar.setTitle(bossBarTitle)
+						}
+						else {
+							object : BukkitRunnable() {
+								override fun run() {
+									val delta = getAnimDelta(hpDisplayed, hpReal).roundFrom(2)
+									hpDisplayed = (hpDisplayed - delta).roundFrom(2)
+									dmgDisplayed = (dmgDisplayed + delta).roundFrom(2)
+									
+									
+									if(hpDisplayed <= 0)  hpDisplayed = 0.0
+									
+									hpPercentageDisplayed = ((hpDisplayed / vic.maxHealth) * 100).roundFrom(2)
+									if(hpPercentageDisplayed / 100 < 0.0)
+										bossBar.progress = 0.0
+									else
+										bossBar.progress = hpPercentageDisplayed / 100
+									
+									
+									bossBarTitle = "${vic.name} $chatColor [HP : ${hpDisplayed.roundFrom(2)} / ${(vic.maxHealth).roundFrom(2)} (${hpPercentageDisplayed.roundFrom(2)}%)] §c [Damaged : ${dmgDisplayed.roundFrom(2)}]"
+									bossBar.setTitle(bossBarTitle)
+									
+									if(hpDisplayed <= hpReal || hpDisplayed <= 0)
+										this.cancel()
+								}
+							}.runTaskTimer(getPlugin(Main::class.java), 1L, 1L)
+						}
 						
 						Bukkit.getScheduler().cancelTask(taskID[player.name]!!) //이전의 Task를 중지하고
 						displayBossBarTask.runTaskLater(getPlugin(Main::class.java), 200L)  //새로 생성된 Task 실행하고  (40번 줄 참고)
@@ -183,12 +232,12 @@ class EntityBossBarHealthEvents : Listener {
 				
 				lateinit var vic: LivingEntity
 				try { vic = event.entity as LivingEntity }  //이벤트 관련 엔티티를 '살아있는 엔티티'로서 가져옴
-				catch(ignored: ClassCastException) { return }  //Casting이 안되는 엔티티를 가져오는 상황이기 때문에 아래의 코드가 작동하지 않게끔 바로 함수를 종료시킨다.
+				catch (ignored: ClassCastException) { return }  //Casting이 안되는 엔티티를 가져오는 상황이기 때문에 아래의 코드가 작동하지 않게끔 바로 함수를 종료시킨다.
 				
 				val amount = event.amount
 				var amountDisplayed = 0.0
 				val playerLocation = player.location
-				val nearbyEntities: MutableCollection<Entity> = playerLocation.world!!.getNearbyEntities(playerLocation, 10.0, 5.0, 10.0) //주변의 엔티티들을 가져온다
+				val nearbyEntities: MutableCollection<Entity> = getNearbyEntitiesInRange(playerLocation) //주변의 엔티티들을 가져온다
 				
 				if(event.regainReason != WITHER_SPAWN && event.regainReason != EntityRegainHealthEvent.RegainReason.WITHER) {  //해당 방식이외의 방식으로 회복을 하였을때
 					if(vic in nearbyEntities) {  //회복을 한게 nearbyEntities에 있다면
@@ -220,25 +269,40 @@ class EntityBossBarHealthEvents : Listener {
 						bossBar.color = bossBarColor
 						bossBar.isVisible = true
 						
-						object : BukkitRunnable() {
-							override fun run() {
-								val delta = getAnimDelta(hpDisplayed, hpReal).roundFrom(2)
-								hpDisplayed = (hpDisplayed + delta).roundFrom(2)
-								amountDisplayed = (amountDisplayed + delta).roundFrom(2)
-								
-								hpPercentageDisplayed = ((hpDisplayed / vic.maxHealth) * 100).roundFrom(2)
-								if(hpPercentageDisplayed / 100 > 1.0)
-									bossBar.progress = 1.0
-								else
-									bossBar.progress = hpPercentageDisplayed / 100
-								
-								bossBarTitle = "${vic.name} $chatColor [HP : ${hpDisplayed.roundFrom(2)} / ${(vic.maxHealth).roundFrom(2)} (${hpPercentageDisplayed.roundFrom(2)}%)] §a [Healed : ${amountDisplayed.roundFrom(2)}]"
-								bossBar.setTitle(bossBarTitle)
-								
-								if(hpDisplayed >= hpReal || hpDisplayed >= vic.maxHealth)
-									this.cancel()
-							}
-						}.runTaskTimer(getPlugin(Main::class.java), 1L, 1L)
+						if(amount == 0.0 || hpDisplayed <= hpReal) {  //아무런 변화가 없을때
+							hpPercentageDisplayed = ((hpDisplayed / vic.maxHealth) * 100).roundFrom(2)
+							if(hpPercentageDisplayed / 100 > 1.0)
+								bossBar.progress = 1.0
+							else
+								bossBar.progress = hpPercentageDisplayed / 100
+							
+							bossBarTitle = "${vic.name} $chatColor [HP : ${hpDisplayed.roundFrom(2)} / ${(vic.maxHealth).roundFrom(2)} (${hpPercentageDisplayed.roundFrom(2)}%)] §c [Damaged : ${amountDisplayed.roundFrom(2)}]"
+							bossBar.setTitle(bossBarTitle)
+						}
+						else {
+							object : BukkitRunnable() {
+								override fun run() {
+									val delta = getAnimDelta(hpDisplayed, hpReal).roundFrom(2)
+									hpDisplayed = (hpDisplayed + delta).roundFrom(2)
+									amountDisplayed = (amountDisplayed + delta).roundFrom(2)
+									
+									
+									if(hpDisplayed >= vic.maxHealth)  hpDisplayed = vic.maxHealth
+									
+									hpPercentageDisplayed = ((hpDisplayed / vic.maxHealth) * 100).roundFrom(2)
+									if(hpPercentageDisplayed / 100 > 1.0)
+										bossBar.progress = 1.0
+									else
+										bossBar.progress = hpPercentageDisplayed / 100
+									
+									bossBarTitle = "${vic.name} $chatColor [HP : ${hpDisplayed.roundFrom(2)} / ${(vic.maxHealth).roundFrom(2)} (${hpPercentageDisplayed.roundFrom(2)}%)] §a [Healed : ${amountDisplayed.roundFrom(2)}]"
+									bossBar.setTitle(bossBarTitle)
+									
+									if(hpDisplayed >= hpReal || hpDisplayed >= vic.maxHealth)
+										this.cancel()
+								}
+							}.runTaskTimer(getPlugin(Main::class.java), 1L, 1L)
+						}
 						
 						Bukkit.getScheduler().cancelTask(taskID[player.name]!!)  //이전의 Task를 중지하고
 						displayBossBarTask.runTaskLater(getPlugin(Main::class.java), 200L)  //새로 생성된 Task 실행하고  (40번 줄 참고)
@@ -253,7 +317,6 @@ class EntityBossBarHealthEvents : Listener {
 		}
 	}
 	
-	
 	fun getAnimDelta(v1: Double, v2: Double): Double
 	{
 		val valueDelta = abs(v1 - v2)
@@ -263,6 +326,30 @@ class EntityBossBarHealthEvents : Listener {
 			valueDelta*velocity < 0.1 -> 0.1
 			else                      -> valueDelta*velocity
 		}
+	}
+	
+	
+	
+	/*
+	private fun Double.calcResistEffect(entity: LivingEntity): Double  //최종 대미지(Final Damage)를 구하려는 목적이었으나, finalDamage의 존재를 알고 나서는 무쓸모
+	{
+		println("calcResist executed")
+		var resistAmp: Int = -1
+		for(effect in entity.activePotionEffects) {
+			println("current effect is ${effect.type.name}")
+			if(effect.type == PotionEffectType.DAMAGE_RESISTANCE) {
+				resistAmp = effect.amplifier
+				println("found, resisAmp is $resistAmp")
+			}
+		}
+		entity.lastDamage
+		if(resistAmp >= 5)
+			resistAmp = 4  //5단계, 대미지 100% 감소
+		
+		val reductionRatio = (resistAmp+1)*20
+		
+		println("$this - ($this * ($resistAmp+1) / 100)\n  = $this - ${(this * (resistAmp + 1) / 100)}\n  = ${this - (this * (resistAmp + 1) / 100)}")
+		return  this - (this * (resistAmp+1) / 100)
 	}
 	
 	/*
@@ -279,4 +366,5 @@ class EntityBossBarHealthEvents : Listener {
 			else              -> 0.8
 		}
 	}*/
+	 */
 }
