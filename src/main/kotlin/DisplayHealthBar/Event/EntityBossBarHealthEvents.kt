@@ -161,7 +161,7 @@ class EntityBossBarHealthEvents : Listener {
 							else
 								bossBar.progress = hpPercentageDisplayed / 100
 							
-							bossBarTitle = "${vic.name} $chatColor [HP : ${hpDisplayed.roundFrom(2)} / ${(vic.maxHealth).roundFrom(2)} (${hpPercentageDisplayed.roundFrom(2)}%)] §c [Damaged : ${dmgDisplayed.roundFrom(2)}]"
+							bossBarTitle = "${vic.name} $chatColor [HP: ${hpDisplayed.roundFrom(2)} / ${(vic.maxHealth).roundFrom(2)} (${hpPercentageDisplayed.roundFrom(2)}%)] §c [Damaged: ${dmgDisplayed.roundFrom(2)}]"
 							bossBar.setTitle(bossBarTitle)
 						}
 						else {
@@ -181,7 +181,7 @@ class EntityBossBarHealthEvents : Listener {
 										bossBar.progress = hpPercentageDisplayed / 100
 									
 									
-									bossBarTitle = "${vic.name} $chatColor [HP : ${hpDisplayed.roundFrom(2)} / ${(vic.maxHealth).roundFrom(2)} (${hpPercentageDisplayed.roundFrom(2)}%)] §c [Damaged : ${dmgDisplayed.roundFrom(2)}]"
+									bossBarTitle = "${vic.name} $chatColor [HP: ${hpDisplayed.roundFrom(2)} / ${(vic.maxHealth).roundFrom(2)} (${hpPercentageDisplayed.roundFrom(2)}%)] §c [Damaged: ${dmgDisplayed.roundFrom(2)}]"
 									bossBar.setTitle(bossBarTitle)
 									
 									if(hpDisplayed <= hpReal || hpDisplayed <= 0)
@@ -239,7 +239,7 @@ class EntityBossBarHealthEvents : Listener {
 				val playerLocation = player.location
 				val nearbyEntities: MutableCollection<Entity> = getNearbyEntitiesInRange(playerLocation) //주변의 엔티티들을 가져온다
 				
-				if(event.regainReason != WITHER_SPAWN && event.regainReason != EntityRegainHealthEvent.RegainReason.WITHER) {  //해당 방식이외의 방식으로 회복을 하였을때
+				if(event.regainReason != EntityRegainHealthEvent.RegainReason.WITHER) {  //해당 방식이외의 방식으로 회복을 하였을때
 					if(vic in nearbyEntities) {  //회복을 한게 nearbyEntities에 있다면
 						val hpReal = (vic.health + amount).roundFrom(2)
 						var hpDisplayed = (vic.health).roundFrom(2)  //어째선지 바로 이전 체력을 가져옴
@@ -269,14 +269,14 @@ class EntityBossBarHealthEvents : Listener {
 						bossBar.color = bossBarColor
 						bossBar.isVisible = true
 						
-						if(amount == 0.0 || hpDisplayed <= hpReal) {  //아무런 변화가 없을때
+						if(amount == 0.0 || hpDisplayed >= hpReal) {  //아무런 변화가 없을때
 							hpPercentageDisplayed = ((hpDisplayed / vic.maxHealth) * 100).roundFrom(2)
 							if(hpPercentageDisplayed / 100 > 1.0)
 								bossBar.progress = 1.0
 							else
 								bossBar.progress = hpPercentageDisplayed / 100
 							
-							bossBarTitle = "${vic.name} $chatColor [HP : ${hpDisplayed.roundFrom(2)} / ${(vic.maxHealth).roundFrom(2)} (${hpPercentageDisplayed.roundFrom(2)}%)] §c [Damaged : ${amountDisplayed.roundFrom(2)}]"
+							bossBarTitle = "${vic.name} $chatColor [HP: ${hpDisplayed.roundFrom(2)} / ${(vic.maxHealth).roundFrom(2)} (${hpPercentageDisplayed.roundFrom(2)}%)] §a [Healed: ${amountDisplayed.roundFrom(2)}]"
 							bossBar.setTitle(bossBarTitle)
 						}
 						else {
@@ -295,7 +295,7 @@ class EntityBossBarHealthEvents : Listener {
 									else
 										bossBar.progress = hpPercentageDisplayed / 100
 									
-									bossBarTitle = "${vic.name} $chatColor [HP : ${hpDisplayed.roundFrom(2)} / ${(vic.maxHealth).roundFrom(2)} (${hpPercentageDisplayed.roundFrom(2)}%)] §a [Healed : ${amountDisplayed.roundFrom(2)}]"
+									bossBarTitle = "${vic.name} $chatColor [HP: ${hpDisplayed.roundFrom(2)} / ${(vic.maxHealth).roundFrom(2)} (${hpPercentageDisplayed.roundFrom(2)}%)] §a [Healed: ${amountDisplayed.roundFrom(2)}]"
 									bossBar.setTitle(bossBarTitle)
 									
 									if(hpDisplayed >= hpReal || hpDisplayed >= vic.maxHealth)
