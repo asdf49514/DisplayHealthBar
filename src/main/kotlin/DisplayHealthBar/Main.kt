@@ -13,9 +13,9 @@ class Main : JavaPlugin()
 	
 	override fun onEnable()
 	{
-		commands = CommandManager(this)
-		getCommand("healthBar")?.setExecutor(commands)
-		CommandManager(this)  //?? 이거 없어도 되지 않음?
+		// CommandManager(this)  //?? 이거 없어도 되지 않음?
+		//commands = CommandManager(this)
+		getCommand("healthbar")?.setExecutor(CommandManager(this))
 		Bukkit.getPluginManager().registerEvents(EntityBossBarHealthEvents(), this)  //이벤트 코드 파일을 지정함
 		
 		

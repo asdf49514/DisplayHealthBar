@@ -1,37 +1,46 @@
 package DisplayHealthBar
 
 
-import DisplayHealthBar.Event.EntityBossBarHealthEvents
 import DisplayHealthBar.Settings.Settings
 import org.bukkit.Bukkit
 import org.bukkit.ChatColor
 import org.bukkit.boss.BarColor
 import org.bukkit.boss.BarStyle
+import org.bukkit.boss.BossBar
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
-import java.lang.Exception
-import java.lang.IndexOutOfBoundsException
-import java.lang.NullPointerException
-import java.lang.NumberFormatException
 
-class CommandManager(private var plugin: Main) : CommandExecutor {  //todo 빌드해서 확인해보자.
+class CommandManager(private var plugin: Main) : CommandExecutor
+{  //todo 빌드해서 확인해보자.
 	override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
-		if(command.name == "healthBar") {
+		if(command.name == "healthbar") {
 			when {
 				args[0].equals("reloadAll", true) -> {  //작동안함
 					for(player in Bukkit.getOnlinePlayers()) {
 						try {
 							BossbarList.bossBarList[player.name]!!.removePlayer(player)
 							BossbarList.bossBarList.remove(player.name, BossbarList.bossBarList[player.name]!!)
+							
+							BossbarList.selfBossBarList[player.name]!!.removePlayer(player)
+							BossbarList.selfBossBarList.remove(player.name, BossbarList.bossBarList[player.name]!!)
+							
 							BossbarList.taskID.remove(player.name)
+							BossbarList.selfTaskID.remove(player.name)
 						} catch(ignored: Exception) { }
 						
 						BossbarList.playerList[player.name] = player
+						
 						BossbarList.bossBarList[player.name] = Bukkit.createBossBar("Health Bar", BarColor.GREEN, BarStyle.SEGMENTED_10)
 						BossbarList.bossBarList[player.name]!!.addPlayer(player)
 						BossbarList.bossBarList[player.name]!!.isVisible = false
+						
+						BossbarList.selfBossBarList[player.name] = Bukkit.createBossBar("Health Bar", BarColor.GREEN, BarStyle.SEGMENTED_10)
+						BossbarList.selfBossBarList[player.name]!!.addPlayer(player)
+						BossbarList.selfBossBarList[player.name]!!.isVisible = false
+						
 						BossbarList.taskID[player.name] = Math.random().toInt()
+						BossbarList.selfTaskID[player.name] = Math.random().toInt()
 					}
 				}
 				args[0].equals("deleteAll", true) -> {
@@ -39,7 +48,12 @@ class CommandManager(private var plugin: Main) : CommandExecutor {  //todo 빌�
 						try {
 							BossbarList.bossBarList[player.name]!!.removePlayer(player)
 							BossbarList.bossBarList.remove(player.name, BossbarList.bossBarList[player.name]!!)
+							
+							BossbarList.selfBossBarList[player.name]!!.removePlayer(player)
+							BossbarList.selfBossBarList.remove(player.name, BossbarList.bossBarList[player.name]!!)
+							
 							BossbarList.taskID.remove(player.name)
+							BossbarList.selfTaskID.remove(player.name)
 						}
 						catch(exception: Exception) {
 							println("${player.name}의 bossBar를 찾을 수 없습니다. (deleteAll)")
@@ -88,9 +102,37 @@ class CommandManager(private var plugin: Main) : CommandExecutor {  //todo 빌�
 					else
 						sender.sendMessage(warning)
 				}
+				args[0] == "JustForTest1" -> {
+					sender.sendMessage("JustForTest1 Executed")
+					sender.sendMessage("")
+					testDisplayManyBossbars()
+				}
+				args[0] == "JustForTest2" -> {
+					sender.sendMessage("JustForTest2 Executed")
+					testHideManyBossbars()
+				}
+				args[0] == "javaTest" -> sender.sendMessage("javaTessdfsdft")
 			}
 		}
 
 		return true
+	}
+	
+	private lateinit var testBossBar1: BossBar
+	private lateinit var testBossBar2: BossBar
+	private fun testDisplayManyBossbars()
+	{
+		testBossBar1 = Bukkit.createBossBar("test1", BarColor.GREEN, BarStyle.SEGMENTED_10)
+		testBossBar2 = Bukkit.createBossBar("test1", BarColor.GREEN, BarStyle.SEGMENTED_10)
+		
+		testBossBar1.isVisible = true
+		testBossBar2.isVisible = true
+		
+	}
+	
+	private fun testHideManyBossbars()
+	{
+		testBossBar1.isVisible = false
+		testBossBar2.isVisible = false
 	}
 }

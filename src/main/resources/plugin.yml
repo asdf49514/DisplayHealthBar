@@ -4,9 +4,11 @@ main: DisplayHealthBar.Main
 api-version: 1.13
 
 commands:
-  healthBar:
+  healthbar:
     reloadAll:
     deleteAll:
     getOnlinePlayers:
     setDeltaVelocity:
       description: ""
+    JustForTest1:
+    JustForTest2:
