@@ -1,0 +1,125 @@
+[33mcommit a799ab553d954cd17b6f040936f19f4d959ebef1[m[33m ([m[1;36mHEAD -> [m[1;32mmaster[m[33m)[m
+Author: 1135975331 <anjunseo9233@gmail.com>
+Date:   Sun Feb 6 12:51:08 2022 +0900
+
+    자연 회복시 수치 변화 애니메이션이 적용되지 않던 점 수정
+    자잘한 오탈자 수정
+
+[33mcommit 556202e8153a162dbe5716a3266e488b678da171[m
+Author: asdf49514 <47475531+1135975331@users.noreply.github.com>
+Date:   Mon Jan 18 21:26:55 2021 +0900
+
+    방패로 대미지를 막았을때 체력바가 작동하지 않도록 함
+    
+    체력에 변동이 없으면 체력바의 값의 변하지 않도록 함
+    
+    기타 자잘한 수정사항
+
+[33mcommit af35e0403215501b5d64d37c9f6d99e7dbda5e8b[m[33m ([m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: asdf49514 <47475531+1135975331@users.noreply.github.com>
+Date:   Mon Jan 18 21:04:07 2021 +0900
+
+    인식 범위 관련 변수 추가
+
+[33mcommit ca7a4cda04108b4b937046d565c481ff58c55c56[m
+Author: asdf49514 <47475531+1135975331@users.noreply.github.com>
+Date:   Mon Jan 18 21:03:21 2021 +0900
+
+    인식 범위 조정 기능 추가
+
+[33mcommit e9b5d5498fdc4c016d066be5aa5560a6618df3d7[m
+Author: asdf49514 <47475531+1135975331@users.noreply.github.com>
+Date:   Sun Jan 10 22:56:10 2021 +0900
+
+    plugin.yml에 명령어 선언 추가
+
+[33mcommit cb3963d71877f1a78ff69fc8b0ca1508c8d17c54[m
+Author: asdf49514 <47475531+1135975331@users.noreply.github.com>
+Date:   Sat Jan 9 00:55:10 2021 +0900
+
+    속도 조절기능 추가
+
+[33mcommit 4c609bee8cacc12a948e57c6e73531b3d22ef756[m
+Author: asdf49514 <47475531+1135975331@users.noreply.github.com>
+Date:   Sat Jan 9 00:52:37 2021 +0900
+
+    체력표시를 실수 첫번째 자리까지 표시하도록 변경
+
+[33mcommit c1ca60b0b1906ac15e4608e96d037fcd35719ef4[m
+Author: asdf49514 <47475531+1135975331@users.noreply.github.com>
+Date:   Sat Jan 9 00:50:44 2021 +0900
+
+    commands:
+    추가
+
+[33mcommit 91df8faf3ea584e1a8fbef91ac0fb7f530cb9253[m
+Author: asdf49514 <47475531+1135975331@users.noreply.github.com>
+Date:   Sat Jan 9 00:49:57 2021 +0900
+
+    ???
+
+[33mcommit b2086a4184a553afffea2fa5dc923892c465730a[m
+Author: asdf49514 <47475531+1135975331@users.noreply.github.com>
+Date:   Sat Jan 9 00:49:50 2021 +0900
+
+    유틸 파일 추가
+
+[33mcommit 5aa993484814195a1071354781fc3a8a51037c50[m
+Author: asdf49514 <47475531+1135975331@users.noreply.github.com>
+Date:   Sat Jan 9 00:49:20 2021 +0900
+
+    ???
+
+[33mcommit 50fa53251cd0684469532029ecd87e09251aeaf5[m
+Author: asdf49514 <47475531+1135975331@users.noreply.github.com>
+Date:   Sat Jan 9 00:49:11 2021 +0900
+
+    ???
+
+[33mcommit 776640a1d6e5cdb54bf1551124a313e0f953c794[m
+Author: asdf49514 <47475531+1135975331@users.noreply.github.com>
+Date:   Wed Jan 6 01:29:49 2021 +0900
+
+    플러그인 리로드 시 날라가 버린 체력바를 현재 접속한 플레이어들에 대해 저장하는 코드 추가
+
+[33mcommit 1a2592d382b982dceeee796103e66d3d0e4ab6f0[m
+Author: asdf49514 <47475531+1135975331@users.noreply.github.com>
+Date:   Wed Jan 6 01:28:32 2021 +0900
+
+    체력바를 저장하던 해시맵을 따로 옮김
+
+[33mcommit 2b6f9a8b975b1ea001c4eb24c301f1bcce315cec[m
+Author: asdf49514 <47475531+1135975331@users.noreply.github.com>
+Date:   Wed Jan 6 01:27:41 2021 +0900
+
+    init
+
+[33mcommit 75e70ec924032e58096f0259c1f7316e72251a1d[m
+Author: asdf49514 <47475531+1135975331@users.noreply.github.com>
+Date:   Wed Jan 6 01:27:22 2021 +0900
+
+    체력바를 리로드하거나 모두 삭제하는 명령어 추가
+
+[33mcommit 094a70bd2d55e0be2c939aedf3396a19e629b975[m
+Author: asdf49514 <47475531+1135975331@users.noreply.github.com>
+Date:   Wed Jan 6 01:26:56 2021 +0900
+
+    체력바를 저장할 공간을 마련 (현재 파일 or 클래스에 구애받지 않고 접근할 수 있도록)
+
+[33mcommit 44fe7afaf6b54b630c37944a5477e3aa19b35627[m
+Author: asdf49514 <47475531+1135975331@users.noreply.github.com>
+Date:   Wed Jan 6 01:25:43 2021 +0900
+
+    init
+
+[33mcommit 7211967c8059ba1e7b78f20777eb6b48bc03acc5[m
+Author: asdf49514 <47475531+1135975331@users.noreply.github.com>
+Date:   Tue Jan 5 15:26:43 2021 +0900
+
+    init
+
+[33mcommit 971f94fd0c36ac5dff4d410451256e6590b8b3ca[m
+Author: 1135975331 <anjunseo9233@gmail.com>
+Date:   Sat Aug 15 19:49:26 2020 +0900
+
+    Initial commit
