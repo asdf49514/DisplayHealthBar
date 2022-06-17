@@ -20,11 +20,11 @@ class Main : JavaPlugin()
 		
 		
 		for(player in Bukkit.getOnlinePlayers()) {
-			BossbarList.playerList[player.name] = player
-			BossbarList.bossBarList[player.name] = Bukkit.createBossBar("Health Bar", BarColor.GREEN, BarStyle.SEGMENTED_10)
-			BossbarList.bossBarList[player.name]!!.addPlayer(player)
-			BossbarList.bossBarList[player.name]!!.isVisible = false
-			BossbarList.taskID[player.name] = Math.random().toInt()
+			DataLists.playerList[player.name] = player
+			DataLists.bossBarList[player.name] = Bukkit.createBossBar("Health Bar", BarColor.GREEN, BarStyle.SEGMENTED_10)
+			DataLists.bossBarList[player.name]!!.addPlayer(player)
+			DataLists.bossBarList[player.name]!!.isVisible = false
+			DataLists.taskID[player.name] = Math.random().toInt()
 		}
 		
 		println("§6<<체력바 표시 플러그인 by asdf49514>>\n§a플러그인이 성공적으로 활성화 되었습니다.§f")

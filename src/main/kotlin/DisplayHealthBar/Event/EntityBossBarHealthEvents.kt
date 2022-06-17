@@ -1,10 +1,10 @@
 package DisplayHealthBar.Event
 
-import DisplayHealthBar.BossbarList.bossBarList
-import DisplayHealthBar.BossbarList.playerList
-import DisplayHealthBar.BossbarList.selfBossBarList
-import DisplayHealthBar.BossbarList.selfTaskID
-import DisplayHealthBar.BossbarList.taskID
+import DisplayHealthBar.DataLists.bossBarList
+import DisplayHealthBar.DataLists.playerList
+import DisplayHealthBar.DataLists.selfBossBarList
+import DisplayHealthBar.DataLists.selfTaskID
+import DisplayHealthBar.DataLists.taskID
 import DisplayHealthBar.Main
 import DisplayHealthBar.Settings.Settings
 import DisplayHealthBar.Util.roundFrom
@@ -21,12 +21,12 @@ import org.bukkit.event.Listener
 import org.bukkit.event.entity.EntityDamageByEntityEvent
 import org.bukkit.event.entity.EntityDamageEvent
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause.*
+import org.bukkit.event.entity.EntityDamageEvent.DamageModifier
 import org.bukkit.event.entity.EntityRegainHealthEvent
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.plugin.java.JavaPlugin.getPlugin
 import org.bukkit.scheduler.BukkitRunnable
-import java.lang.Exception
 import java.lang.Math.abs
 
 class EntityBossBarHealthEvents : Listener
@@ -119,8 +119,6 @@ class EntityBossBarHealthEvents : Listener
 				try { vic = event.entity as LivingEntity }  //이벤트 관련 엔티티를 '살아있는 엔티티'로서 가져옴
 				catch (ignored: ClassCastException) { return }  //Casting이 안되는 엔티티를 가져오는 상황
 				
-				val dmg = (event.finalDamage).roundFrom(2)
-				var dmgDisplayed = 0.0
 				val playerLocation = player.location
 				val nearbyEntities: MutableCollection<Entity> = getNearbyEntitiesInRange(playerLocation) //주변의 엔티티들을 가져온다
 				
@@ -138,17 +136,27 @@ class EntityBossBarHealthEvents : Listener
 				}
 				
 				
-				if((vic is Player) && vic.isBlocking && isDamageBlocked)  return  //대상이 뒤치기 당할때 안뜨는 문제가 생김  (막을때는 시선이 마주침 or 맞은 방향을 알아보는 것을 이용해보자.  https://www.spigotmc.org/threads/players-facing-direction-relative-to-the-entity.420843/, Attacks coming from within a 180° radius in front of a player will be negated,)
+				if((vic is Player) && vic.isBlocking && isDamageBlocked)  return
 				if(event.cause != CRAMMING && event.cause != ENTITY_SWEEP_ATTACK && event.cause != SUICIDE) {  //해당 방식 이외의 방식으로 데미지를 입었을때
 					if(vic in nearbyEntities) {  //데미지를 입은게 nearbyEntities에 있다면
+						var dmgDisplayed = 0.0
+						var abDmg = getFinalDamageAbsorption(event)//(event.finalDamage).roundFrom(2)
+						val dmg = event.finalDamage
 						
-						val hpReal = (vic.health - dmg).roundFrom(2)
+						var absorbDisplayed = vic.absorptionAmount.roundFrom(2)
+						var absorbReal = (vic.absorptionAmount - abDmg).roundFrom(2)
+						
 						var hpDisplayed = (vic.health).roundFrom(2)
-						val hpPercentageReal: Double = ((hpReal) / vic.maxHealth).roundFrom(2)
+						var hpReal = (vic.health - dmg).roundFrom(2)
 						var hpPercentageDisplayed: Double /*= 0= ((hpDisplayed / vic.maxHealth)*100).toInt()*/
+						val hpPercentageReal: Double = ((hpReal) / vic.maxHealth).roundFrom(2)
 						
-						//println("hpReal: ${hpReal}, dmg: ${dmg}, realhpReal: ${hpReal-dmg}") //디버깅 전용
+//						println("abDmg: $abDmg, dmg: $dmg")
+//						println("absorpDisplayed: $absorbDisplayed, absorbReal: $absorbReal, dmg: ${dmg}, rawDmg: ${event.damage}")
+//						println("hpReal: ${hpReal}, dmg: ${dmg}, realhpReal: ${hpReal-dmg}") //디버깅 전용
 						
+						if(absorbReal <= 0.0) absorbReal = 0.0
+						if(hpReal <= 0.0) hpReal = 0.0
 						
 						val colors = getBossbarColors(hpPercentageReal)
 						bossBar.color = colors[0] as BarColor
@@ -157,32 +165,42 @@ class EntityBossBarHealthEvents : Listener
 						var bossBarTitle: String
 						bossBar.isVisible = true
 						
-						if(dmg == 0.0 || hpDisplayed <= hpReal) {  //아무런 변화가 없을 때 //todo 체력 회복 이벤트에도 똑같이, (능력사용시 저항 5 -> 4or3으로 변경, 하고나서 이 각주 지우기)
+						if(((dmg == 0.0 && abDmg == 0.0) || hpDisplayed <= hpReal) && absorbDisplayed <= 0.0) {  //아무런 변화가 없을 때 //todo 체력 회복 이벤트에도 똑같이, (능력사용시 저항 5 -> 4or3으로 변경, 하고나서 이 각주 지우기)
 							hpPercentageDisplayed = ((hpDisplayed / vic.maxHealth) * 100).roundFrom(2)
 							bossBar.progress = getBossBarProgressValue(hpPercentageDisplayed, "Damaged")
 							
-							bossBarTitle = "${vic.name} $chatColor [HP: ${hpDisplayed.roundFrom(2)} / ${(vic.maxHealth).roundFrom(2)} (${hpPercentageDisplayed.roundFrom(2)}%)] §c [Damaged: ${dmgDisplayed.roundFrom(2)}]"
+							bossBarTitle = getBossBarTitleDamaged(vic, chatColor, hpDisplayed, hpPercentageDisplayed, dmgDisplayed, absorbDisplayed)
 							bossBar.setTitle(bossBarTitle)
 						}
 						else {
 							object : BukkitRunnable() {
 								override fun run() {
-									val delta = getAnimDelta(hpDisplayed, hpReal).roundFrom(2)
-									hpDisplayed = (hpDisplayed - delta).roundFrom(2)
-									dmgDisplayed = (dmgDisplayed + delta).roundFrom(2)
+									val absorbDelta = getAnimDelta(absorbDisplayed, absorbReal).roundFrom(2)
+									val hpDelta = getAnimDelta(hpDisplayed, hpReal).roundFrom(2)
 									
+//									println("absorbDelta: $absorbDelta, hpDelta: $hpDelta")
+//									println("absorpDisplayed: $absorbDisplayed, absorbReal: $absorbReal\nhpDisplayed: $hpDisplayed, hpReal: $hpReal")
 									
+									absorbDisplayed = (absorbDisplayed - absorbDelta).roundFrom(2)
+									hpDisplayed = (hpDisplayed - hpDelta).roundFrom(2)
+									dmgDisplayed = (dmgDisplayed + hpDelta + absorbDelta).roundFrom(2)
+									
+									if(absorbDisplayed <= 0)  absorbDisplayed = 0.0
 									if(hpDisplayed <= 0)  hpDisplayed = 0.0
 									
 									hpPercentageDisplayed = ((hpDisplayed / vic.maxHealth) * 100).roundFrom(2)
 									bossBar.progress = getBossBarProgressValue(hpPercentageDisplayed, "Damaged")
 									
 									
-									bossBarTitle = "${vic.name} $chatColor [HP: ${hpDisplayed.roundFrom(2)} / ${(vic.maxHealth).roundFrom(2)} (${hpPercentageDisplayed.roundFrom(2)}%)] §c [Damaged: ${dmgDisplayed.roundFrom(2)}]"
+									bossBarTitle = getBossBarTitleDamaged(vic, chatColor, hpDisplayed, hpPercentageDisplayed, dmgDisplayed, absorbDisplayed)
 									bossBar.setTitle(bossBarTitle)
 									
-									if(hpDisplayed <= hpReal || hpDisplayed <= 0)
+									
+									if(absorbDisplayed > 0.0 && (absorbDisplayed <= absorbReal))
 										this.cancel()
+									if(absorbDisplayed <= 0.0 && (hpDisplayed <= hpReal || hpDisplayed <= 0))
+										this.cancel()
+									
 								}
 							}.runTaskTimer(getPlugin(Main::class.java), 1L, 1L)
 						}
@@ -225,8 +243,6 @@ class EntityBossBarHealthEvents : Listener
 				try { vic = event.entity as LivingEntity }  //이벤트 관련 엔티티를 '살아있는 엔티티'로서 가져옴
 				catch (ignored: ClassCastException) { return }  //Casting이 안되는 엔티티를 가져오는 상황이기 때문에 아래의 코드가 작동하지 않게끔 바로 함수를 종료시킨다.
 				
-				val amount = event.amount
-				var amountDisplayed = 0.0
 				val playerLocation = player.location
 				val nearbyEntities: MutableCollection<Entity> = getNearbyEntitiesInRange(playerLocation) //주변의 엔티티들을 가져온다
 				
@@ -245,13 +261,17 @@ class EntityBossBarHealthEvents : Listener
 				
 				if(event.regainReason != EntityRegainHealthEvent.RegainReason.WITHER) {  //해당 방식이외의 방식으로 회복을 하였을때
 					if(vic in nearbyEntities) {  //회복을 한게 nearbyEntities에 있다면
-						val hpReal = (vic.health + amount).roundFrom(2)
+						var amountDisplayed = 0.0
+						val amount = event.amount
+					
 						var hpDisplayed = (vic.health).roundFrom(2)  //어째선지 바로 이전 체력을 가져옴
-						val hpPercentageReal: Double = ((hpReal) / vic.maxHealth).roundFrom(2)
+						var hpReal = (hpDisplayed + amount)
 						var hpPercentageDisplayed: Double /*= 0= ((hpDisplayed / vic.maxHealth)*100).toInt()*/
+						val hpPercentageReal: Double = ((hpReal) / vic.maxHealth).roundFrom(2)
 						
 						//println("hpReal: ${hpReal}, amount: ${amount}, realhpReal: ${hpReal+amount}") //디버깅 전용
 						
+						if(hpReal >= vic.maxHealth) hpReal = vic.maxHealth
 						
 						val colors = getBossbarColors(hpPercentageReal)
 						bossBar.color = colors[0] as BarColor
@@ -351,12 +371,34 @@ class EntityBossBarHealthEvents : Listener
 	
 	fun getAnimDelta(v1: Double, v2: Double): Double
 	{
+		//println("v1: $v1, v2: $v2")
 		val valueDelta = abs(v1 - v2)
 		val velocity = Settings.deltaVelocity
+		val deltaResult = valueDelta * velocity
 		
 		return when {
-			valueDelta*velocity < 0.1 -> 0.1
-			else                      -> valueDelta*velocity
+			deltaResult == 0.0 -> 0.0
+			deltaResult < 0.1  -> 0.1
+			else               -> deltaResult
+		}
+	}
+	
+	private val damageModifiers = DamageModifier.values()
+	private fun getFinalDamageAbsorption(event: EntityDamageEvent): Double
+	{
+		var damage = 0.0
+		for (modifier in damageModifiers) {
+			if(modifier == DamageModifier.ABSORPTION) continue
+			damage += event.getDamage(modifier)
+		}
+		return damage
+	}
+	
+	private fun getBossBarTitleDamaged(vic: LivingEntity, chatColor: String, hpDisplayed: Double, hpPercentageDisplayed: Double, dmgDisplayed: Double, absorbDisplayed: Double): String
+	{
+		return when {
+			absorbDisplayed > 0.0 -> "${vic.name} $chatColor [HP: ${hpDisplayed.roundFrom(2)} + ${absorbDisplayed.roundFrom(2)} / ${(vic.maxHealth).roundFrom(2)} (${hpPercentageDisplayed.roundFrom(2)}%)] §c [Damaged: ${dmgDisplayed.roundFrom(2)}]"
+			else                  -> "${vic.name} $chatColor [HP: ${hpDisplayed.roundFrom(2)} / ${(vic.maxHealth).roundFrom(2)} (${hpPercentageDisplayed.roundFrom(2)}%)] §c [Damaged: ${dmgDisplayed.roundFrom(2)}]"
 		}
 	}
 	

@@ -1,6 +1,10 @@
 package DisplayHealthBar
 
 
+import DisplayHealthBar.DataLists.bossBarList
+import DisplayHealthBar.DataLists.selfBossBarList
+import DisplayHealthBar.DataLists.selfTaskID
+import DisplayHealthBar.DataLists.taskID
 import DisplayHealthBar.Settings.Settings
 import org.bukkit.Bukkit
 import org.bukkit.ChatColor
@@ -19,41 +23,41 @@ class CommandManager(private var plugin: Main) : CommandExecutor
 				args[0].equals("reloadAll", true) -> {  //작동안함
 					for(player in Bukkit.getOnlinePlayers()) {
 						try {
-							BossbarList.bossBarList[player.name]!!.removePlayer(player)
-							BossbarList.bossBarList.remove(player.name, BossbarList.bossBarList[player.name]!!)
+							bossBarList[player.name]!!.removePlayer(player)
+							bossBarList.remove(player.name, bossBarList[player.name]!!)
 							
-							BossbarList.selfBossBarList[player.name]!!.removePlayer(player)
-							BossbarList.selfBossBarList.remove(player.name, BossbarList.bossBarList[player.name]!!)
+							selfBossBarList[player.name]!!.removePlayer(player)
+							selfBossBarList.remove(player.name, bossBarList[player.name]!!)
 							
-							BossbarList.taskID.remove(player.name)
-							BossbarList.selfTaskID.remove(player.name)
+							taskID.remove(player.name)
+							selfTaskID.remove(player.name)
 						} catch(ignored: Exception) { }
 						
-						BossbarList.playerList[player.name] = player
+						DataLists.playerList[player.name] = player
 						
-						BossbarList.bossBarList[player.name] = Bukkit.createBossBar("Health Bar", BarColor.GREEN, BarStyle.SEGMENTED_10)
-						BossbarList.bossBarList[player.name]!!.addPlayer(player)
-						BossbarList.bossBarList[player.name]!!.isVisible = false
+						bossBarList[player.name] = Bukkit.createBossBar("Health Bar", BarColor.GREEN, BarStyle.SEGMENTED_10)
+						bossBarList[player.name]!!.addPlayer(player)
+						bossBarList[player.name]!!.isVisible = false
 						
-						BossbarList.selfBossBarList[player.name] = Bukkit.createBossBar("Health Bar", BarColor.GREEN, BarStyle.SEGMENTED_10)
-						BossbarList.selfBossBarList[player.name]!!.addPlayer(player)
-						BossbarList.selfBossBarList[player.name]!!.isVisible = false
+						selfBossBarList[player.name] = Bukkit.createBossBar("Health Bar(Self)", BarColor.GREEN, BarStyle.SEGMENTED_10)
+						selfBossBarList[player.name]!!.addPlayer(player)
+						selfBossBarList[player.name]!!.isVisible = false
 						
-						BossbarList.taskID[player.name] = Math.random().toInt()
-						BossbarList.selfTaskID[player.name] = Math.random().toInt()
+						taskID[player.name] = Math.random().toInt()
+						selfTaskID[player.name] = Math.random().toInt()
 					}
 				}
 				args[0].equals("deleteAll", true) -> {
 					for(player in Bukkit.getOnlinePlayers()) {
 						try {
-							BossbarList.bossBarList[player.name]!!.removePlayer(player)
-							BossbarList.bossBarList.remove(player.name, BossbarList.bossBarList[player.name]!!)
+							bossBarList[player.name]!!.removePlayer(player)
+							bossBarList.remove(player.name, bossBarList[player.name]!!)
 							
-							BossbarList.selfBossBarList[player.name]!!.removePlayer(player)
-							BossbarList.selfBossBarList.remove(player.name, BossbarList.bossBarList[player.name]!!)
+							selfBossBarList[player.name]!!.removePlayer(player)
+							selfBossBarList.remove(player.name, bossBarList[player.name]!!)
 							
-							BossbarList.taskID.remove(player.name)
-							BossbarList.selfTaskID.remove(player.name)
+							taskID.remove(player.name)
+							selfTaskID.remove(player.name)
 						}
 						catch(exception: Exception) {
 							println("${player.name}의 bossBar를 찾을 수 없습니다. (deleteAll)")
